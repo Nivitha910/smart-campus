@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block title %}Student Dashboard{% endblock %}{% block content %}
+<div class="page-heading"><div><h1>Dashboard</h1><p>Track campus services and attendance</p></div><div><a class="btn btn-primary" href="{{ url_for('student_complaints') }}">New complaint</a></div></div>
+<div class="stats-grid">
+{% set status_cards=[('Complaints','Total',complaints|length,'blue'),('Pending','Pending',cs.get('Pending',0),'orange'),('In Progress','In Progress',cs.get('In Progress',0),'indigo'),('Resolved','Resolved',cs.get('Resolved',0),'green')] %}
+{% for title,label,value,color in status_cards %}<div class="stat-card {{ color }}"><div><span>{{ label }}</span><h3>{{ value }}</h3></div><i class="fa-solid fa-circle-exclamation"></i></div>{% endfor %}
+<div class="stat-card orange"><div><span>Attendance Pending</span><h3>{{ ats.get('Pending',0) }}</h3></div><i class="fa-solid fa-clock"></i></div>
+<div class="stat-card green"><div><span>Attendance Approved</span><h3>{{ ats.get('Approved',0) }}</h3></div><i class="fa-solid fa-check"></i></div>
+</div>
+<div class="row g-4 mt-1"><div class="col-lg-7"><div class="panel"><h5>Recent complaints</h5>{% for c in complaints %}<div class="activity-row"><div><b>{{ c.title }}</b><small>{{ c.complaint_id }}</small></div><span class="badge status-{{ c.status|replace(' ','-')|lower }}">{{ c.status }}</span></div>{% else %}<div class="empty">No complaints submitted yet</div>{% endfor %}</div></div>
+<div class="col-lg-5"><div class="panel"><h5>Status overview</h5><canvas id="complaintChart" data-pending="{{ cs.get('Pending',0) }}" data-progress="{{ cs.get('In Progress',0) }}" data-resolved="{{ cs.get('Resolved',0) }}" data-rejected="{{ cs.get('Rejected',0) }}"></canvas></div></div></div>
+<div class="row g-4 mt-1"><div class="col-lg-7"><div class="panel"><h5>Recent attendance requests</h5>{% for r in attendance %}<div class="activity-row"><div><b>{{ r.subject }}</b><small>{{ r.request_id }}</small></div><span class="badge status-{{ r.status|lower }}">{{ r.status }}</span></div>{% else %}<div class="empty">No attendance requests yet</div>{% endfor %}</div></div>
+<div class="col-lg-5"><div class="panel"><h5>Notifications</h5>{% for n in notifications %}<div class="notification-row"><b>{{ n.title }}</b><small>{{ n.created_at.strftime('%d %b %Y, %H:%M') }}</small></div>{% else %}<div class="empty">No notifications</div>{% endfor %}</div></div></div>
+{% endblock %}

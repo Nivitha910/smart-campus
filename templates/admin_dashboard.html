@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+{% set dashboard_stats = stats|default({}, true) %}
+{% set complaint_counts = cs|default({}, true) %}
+{% set attendance_counts = ats|default({}, true) %}
+{% set category_rows = category_stats|default([], true) %}
+{% set department_rows = department_stats|default([], true) %}
+{% set complaint_rows = recent_complaints|default([], true) %}
+{% set attendance_rows = recent_attendance|default([], true) %}
+{% set department_max = department_rows[0].get('count', 0) if department_rows else 0 %}
+
+<div class="page-heading">
+  <div><h1>Administration</h1><p>Campus-wide operational overview</p></div>
+  <a class="btn btn-outline-primary" href="{{ url_for('export_complaints') }}"><i class="fa-solid fa-download"></i> Export CSV</a>
+</div>
+<div class="stats-grid">
+  <div class="stat-card blue"><div><span>Total Students</span><h3>{{ dashboard_stats.get('students', 0) }}</h3></div><i class="fa-solid fa-users"></i></div>
+  <div class="stat-card orange"><div><span>Pending Complaints</span><h3>{{ complaint_counts.get('Pending', 0) }}</h3></div><i class="fa-solid fa-hourglass-half"></i></div>
+  <div class="stat-card indigo"><div><span>In Progress</span><h3>{{ complaint_counts.get('In Progress', 0) }}</h3></div><i class="fa-solid fa-spinner"></i></div>
+  <div class="stat-card green"><div><span>Resolved Complaints</span><h3>{{ complaint_counts.get('Resolved', 0) }}</h3></div><i class="fa-solid fa-circle-check"></i></div>
+  <div class="stat-card blue"><div><span>Attendance Requests</span><h3>{{ dashboard_stats.get('attendance', 0) }}</h3></div><i class="fa-solid fa-calendar-check"></i></div>
+  <div class="stat-card orange"><div><span>Pending Attendance</span><h3>{{ attendance_counts.get('Pending', 0) }}</h3></div><i class="fa-solid fa-clock"></i></div>
+</div>
+<div class="row g-4 mt-1">
+  <div class="col-lg-7">
+    <div class="panel">
+      <h5>Complaint categories</h5>
+      {% if category_rows %}
+      <canvas id="categoryChart" data-labels="{{ category_rows|map(attribute='_id')|list|tojson }}" data-values="{{ category_rows|map(attribute='count')|list|tojson }}"></canvas>
+      {% else %}
+      <div class="empty">No complaint category data</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="panel">
+      <h5>Students by department</h5>
+      {% if department_rows %}
+        {% for department in department_rows[:6] %}
+        {% set count = department.get('count', 0) %}
+        <div class="progress-row">
+          <div><span>{{ department.get('_id') or 'Unassigned' }}</span><b>{{ count }}</b></div>
+          <div class="progress"><div class="progress-bar" style="width: {{ (count / (department_max or 1) * 100)|round }}%"></div></div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty">No department data</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<div class="row g-4 mt-1">
+  <div class="col-lg-6">
+    <div class="panel">
+      <h5>Recent complaints</h5>
+      {% for complaint in complaint_rows %}
+      <div class="activity-row">
+        <div><b>{{ complaint.title }}</b><small>{{ complaint.student_name }} · {{ complaint.complaint_id }}</small></div>
+        <span class="badge status-{{ complaint.status|replace(' ','-')|lower }}">{{ complaint.status }}</span>
+      </div>
+      {% else %}
+      <div class="empty">No recent complaints</div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="panel">
+      <h5>Recent attendance requests</h5>
+      {% for attendance in attendance_rows %}
+      <div class="activity-row">
+        <div><b>{{ attendance.student_name }}</b><small>{{ attendance.subject }} · {{ attendance.request_id }}</small></div>
+        <span class="badge status-{{ attendance.status|lower }}">{{ attendance.status }}</span>
+      </div>
+      {% else %}
+      <div class="empty">No recent requests</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
